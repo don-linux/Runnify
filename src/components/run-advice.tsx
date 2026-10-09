@@ -2,13 +2,15 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { DayScene } from "@/components/day-scene";
 import { Button } from "@/components/ui/button";
 import type { HourReading, Place, RunConditions } from "@/lib/conditions";
 import { OPEN_METEO_CREDIT } from "@/lib/credits";
 import type { RunMessage } from "@/lib/run-message";
 import {
   DURATIONS,
+  dayPeriodFromLocal,
   readVerdict,
   roundedHourInTimeZone,
   type DurationMinutes,
@@ -36,12 +38,10 @@ export function RunAdvice() {
   const [startLocal, setStartLocal] = useState("");
   const [startTouched, setStartTouched] = useState(false);
   const [duration, setDuration] = useState<DurationMinutes>(45);
-  const suggestedStart = place
-    ? roundedHourInTimeZone(place.timezone)
-    : typeof window === "undefined"
-      ? ""
-      : roundedHourInTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+  const suggestedStart = useSuggestedStart(place?.timezone ?? null);
   const startValue = startTouched ? startLocal : suggestedStart;
+  const period = dayPeriodFromLocal(startValue) ?? "day";
+  const night = period === "night";
 
   useEffect(() => {
     const controller = new AbortController();
@@ -175,26 +175,28 @@ export function RunAdvice() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-6 sm:px-6 sm:py-10">
+    <>
+    <DayScene period={period} />
+    <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-6 sm:px-6 sm:py-10">
       <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.22em] text-primary">Salida</p>
-          <h1 className="mt-2 font-heading text-4xl leading-none text-foreground sm:text-6xl">
+          <h1 className={`mt-2 font-heading text-4xl leading-none sm:text-6xl ${night ? "text-white" : "text-foreground"}`}>
             ¿Salgo a correr?
           </h1>
-          <p className="mt-3 max-w-xl text-base leading-7 text-muted-foreground">
-            Kimi K2.7 Code mira la hora que elegiste: temperatura, lluvia, viento, UV, radiación y aire.
+          <p className={`mt-3 max-w-xl text-base leading-7 ${night ? "text-white/80" : "text-muted-foreground"}`}>
+            Kimi K2.7 Code mira la hora que elegiste: temperatura, lluvia, sol y el aire que vas a respirar.
             Te dice si sales, con qué cuidado, o si mejor lo dejas.
           </p>
         </div>
-        <p className="max-w-xs text-sm leading-6 text-muted-foreground">
-          Modelo <span className="text-foreground">moonshotai/kimi-k2.7-code</span> por Vercel AI Gateway. El
+        <p className={`max-w-xs text-sm leading-6 ${night ? "text-white/75" : "text-muted-foreground"}`}>
+          Modelo <span className={night ? "text-white" : "text-foreground"}>moonshotai/kimi-k2.7-code</span> por Vercel AI Gateway. El
           cielo lo pone Open-Meteo, sin otra clave.
         </p>
       </header>
 
       {configured === false ? (
-        <p className="mb-6 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm leading-6 text-foreground">
+        <p className="mb-6 rounded-2xl border border-destructive/30 bg-card px-4 py-3 text-sm leading-6 text-foreground">
           Falta <code className="font-mono">AI_GATEWAY_API_KEY</code> en{" "}
           <code className="font-mono">.env.local</code>. Créala en el AI Gateway de Vercel. El cupo
           incluido de 5 dólares alcanza para este demo. Reinicia el servidor después de guardarla.
@@ -202,7 +204,7 @@ export function RunAdvice() {
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
-        <section className="rounded-3xl border border-border bg-card p-4 shadow-sm sm:p-5">
+        <section className="rounded-3xl border border-border/80 bg-card/90 p-4 shadow-sm backdrop-blur-md sm:p-5">
           <form
             className="flex flex-col gap-4"
             onSubmit={(event) => {
@@ -299,7 +301,7 @@ export function RunAdvice() {
           </form>
         </section>
 
-        <section className="flex min-h-[28rem] flex-col rounded-3xl border border-border bg-card p-4 shadow-sm sm:p-6">
+        <section className="flex min-h-[28rem] flex-col rounded-3xl border border-border/80 bg-card/90 p-4 shadow-sm backdrop-blur-md sm:p-6">
           <ToolStatus message={assistant} busy={busy} />
 
           {error ? (
@@ -328,13 +330,27 @@ export function RunAdvice() {
             )
           ) : null}
 
-          {advice ? <Verdict text={advice} kind={verdict} /> : null}
-          {conditions ? <ConditionsPanel conditions={conditions} /> : null}
+          {advice ? <VerdictPill kind={verdict} /> : null}
+          {conditions && (advice || !busy) ? <ConditionsPanel conditions={conditions} /> : null}
+          {advice ? <AdviceCopy text={advice} kind={verdict} /> : null}
         </section>
       </div>
 
-      <footer className="mt-8 text-xs leading-5 text-muted-foreground">{OPEN_METEO_CREDIT}</footer>
+      <footer className={`mt-8 w-fit rounded-full px-3 py-1 text-xs leading-5 ${night ? "bg-black/45 text-white/80" : "bg-card/85 text-muted-foreground"}`}>{OPEN_METEO_CREDIT}</footer>
     </main>
+    </>
+  );
+}
+
+function subscribeClock() {
+  return () => {};
+}
+
+function useSuggestedStart(timeZone: string | null): string {
+  return useSyncExternalStore(
+    subscribeClock,
+    () => roundedHourInTimeZone(timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone),
+    () => (timeZone ? roundedHourInTimeZone(timeZone) : ""),
   );
 }
 
@@ -399,7 +415,7 @@ function bodyAfterVerdict(text: string, kind: ReturnType<typeof readVerdict>): s
   return text;
 }
 
-function Verdict({ text, kind }: { text: string; kind: ReturnType<typeof readVerdict> }) {
+function VerdictPill({ kind }: { kind: ReturnType<typeof readVerdict> }) {
   const label = kind === "stop" ? "No salir" : kind === "caution" ? "Salir con precaución" : kind === "go" ? "Salir" : "Consejo";
   const tone =
     kind === "stop"
@@ -411,21 +427,53 @@ function Verdict({ text, kind }: { text: string; kind: ReturnType<typeof readVer
           : "bg-secondary text-secondary-foreground";
 
   return (
-    <article>
-      <p className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${tone}`}>{label}</p>
-      <div className="mt-4 space-y-3 text-base leading-7 whitespace-pre-wrap">
-        {bodyAfterVerdict(text, kind).replaceAll("**", "")}
-      </div>
-    </article>
+    <p className={`mx-auto mb-6 flex w-fit max-w-full items-center justify-center rounded-full px-8 py-3 text-center font-heading text-2xl leading-none sm:text-3xl ${tone}`}>
+      {label}
+    </p>
   );
+}
+
+function AdviceCopy({ text, kind }: { text: string; kind: ReturnType<typeof readVerdict> }) {
+  const { body, close } = splitClosingLine(bodyAfterVerdict(text, kind).replaceAll("**", ""));
+
+  return (
+    <div className="mt-6">
+      {body ? <div className="space-y-3 text-base leading-7 whitespace-pre-wrap">{body}</div> : null}
+      {close ? (
+        <p className="mt-8 text-center font-heading text-2xl italic leading-snug text-foreground">{close}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function splitClosingLine(text: string): { body: string; close: string } {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return { body: "", close: "" };
+  }
+
+  const paragraphs = trimmed.split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean);
+  if (paragraphs.length >= 2) {
+    return {
+      body: paragraphs.slice(0, -1).join("\n\n"),
+      close: paragraphs[paragraphs.length - 1],
+    };
+  }
+
+  const lines = trimmed.split("\n").map((part) => part.trim()).filter(Boolean);
+  if (lines.length >= 2) {
+    return { body: lines.slice(0, -1).join("\n"), close: lines[lines.length - 1] };
+  }
+
+  return { body: trimmed, close: "" };
 }
 
 function ConditionsPanel({ conditions }: { conditions: RunConditions }) {
   const hours = conditions.hours;
   return (
-    <div className="mt-8 border-t border-border pt-5">
+    <div className="border-t border-border pt-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-heading text-2xl">Lo que vio el modelo</h2>
+        <h2 className="font-heading text-2xl">Parámetros de tu run</h2>
         <p className="text-sm text-muted-foreground">
           {clock(conditions.startLocal)}–{clock(conditions.endLocal)} · {conditions.place.label}
         </p>
@@ -434,7 +482,6 @@ function ConditionsPanel({ conditions }: { conditions: RunConditions }) {
         <Metric label="Temperatura" value={range(hours, (hour) => hour.temperatureC, "°C")} />
         <Metric label="Sensación" value={maxOf(hours, (hour) => hour.feelsLikeC, "°C")} />
         <Metric label="Lluvia" value={maxOf(hours, (hour) => hour.precipitationProbability, "%")} />
-        <Metric label="Viento" value={maxOf(hours, (hour) => hour.windKmh, " km/h")} />
         <Metric
           label="UV"
           value={maxOf(hours, (hour) => hour.uvIndex, "")}
@@ -443,8 +490,8 @@ function ConditionsPanel({ conditions }: { conditions: RunConditions }) {
         <Metric label="Radiación" value={maxOf(hours, (hour) => hour.shortwaveWm2, " W/m²")} />
         <Metric
           label="Aire"
-          value={maxOf(hours, (hour) => hour.usAqi, "")}
-          detail={conditions.airNote ?? labelOf(hours, (hour) => hour.aqiLabel)}
+          value={conditions.airNote ? "Sin dato" : (labelOf(hours, (hour) => hour.aqiLabel) ?? "—")}
+          detail={conditions.airNote ?? airDetail(hours)}
         />
         <Metric
           label="Sol"
@@ -460,7 +507,7 @@ function ConditionsPanel({ conditions }: { conditions: RunConditions }) {
               {" "}
               {hour.weather}, {formatNumber(hour.temperatureC, "°C")}, UV {formatNumber(hour.uvIndex)},{" "}
               {formatNumber(hour.shortwaveWm2, " W/m²")}
-              {hour.usAqi != null ? `, AQI ${formatNumber(hour.usAqi)}` : ""}
+              {hour.aqiLabel ? `, aire ${hour.aqiLabel}` : ""}
             </span>
           </li>
         ))}
@@ -517,6 +564,11 @@ function range(
     return formatNumber(low, suffix);
   }
   return `${low}–${high}${suffix}`;
+}
+
+function airDetail(hours: HourReading[]): string | undefined {
+  const value = maxOf(hours, (hour) => hour.usAqi, "");
+  return value === "—" ? undefined : `índice ${value}`;
 }
 
 function labelOf(hours: HourReading[], pick: (hour: HourReading) => string | null): string | null {

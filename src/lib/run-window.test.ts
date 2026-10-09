@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   addMinutes,
+  dayPeriodFromHour,
+  dayPeriodFromLocal,
   formatLocalDateTime,
   parseLocalDateTime,
   readVerdict,
@@ -35,6 +37,19 @@ test("roundedHourInTimeZone bumps a partial hour", () => {
   const date = new Date("2026-10-09T15:10:00Z");
   assert.equal(roundedHourInTimeZone("UTC", date), "2026-10-09T16:00");
   assert.equal(roundedHourInTimeZone("UTC", new Date("2026-10-09T15:00:00Z")), "2026-10-09T15:00");
+});
+
+test("dayPeriodFromHour splits the day into four running skies", () => {
+  assert.equal(dayPeriodFromHour(5), "morning");
+  assert.equal(dayPeriodFromHour(10), "morning");
+  assert.equal(dayPeriodFromHour(11), "day");
+  assert.equal(dayPeriodFromHour(15), "day");
+  assert.equal(dayPeriodFromHour(16), "afternoon");
+  assert.equal(dayPeriodFromHour(19), "afternoon");
+  assert.equal(dayPeriodFromHour(20), "night");
+  assert.equal(dayPeriodFromHour(4), "night");
+  assert.equal(dayPeriodFromLocal("2026-10-09T18:30"), "afternoon");
+  assert.equal(dayPeriodFromLocal("no-es-una-hora"), null);
 });
 
 test("readVerdict prefers the conservative label", () => {

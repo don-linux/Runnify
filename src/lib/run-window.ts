@@ -133,6 +133,29 @@ export function roundedHourInTimeZone(timeZone: string, date = new Date()): stri
   return formatLocalDateTime({ year, month, day, hour, minute: 0 });
 }
 
+export type DayPeriod = "morning" | "day" | "afternoon" | "night";
+
+export function dayPeriodFromHour(hour: number): DayPeriod {
+  if (hour >= 5 && hour < 11) {
+    return "morning";
+  }
+  if (hour >= 11 && hour < 16) {
+    return "day";
+  }
+  if (hour >= 16 && hour < 20) {
+    return "afternoon";
+  }
+  return "night";
+}
+
+export function dayPeriodFromLocal(local: string): DayPeriod | null {
+  const parsed = parseLocalDateTime(local);
+  if (!parsed) {
+    return null;
+  }
+  return dayPeriodFromHour(parsed.hour);
+}
+
 export function readVerdict(text: string): "go" | "caution" | "stop" | null {
   const head = text.slice(0, 120).toLowerCase();
   if (head.includes("no salir")) {
