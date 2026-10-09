@@ -442,8 +442,6 @@ export function forecastView(conditions: RunConditions) {
       sensacionC: hour.feelsLikeC,
       lluviaProbabilidad: hour.precipitationProbability,
       lluviaMm: hour.precipitationMm,
-      vientoKmh: hour.windKmh,
-      rachasKmh: hour.gustKmh,
       nubes: hour.cloudCover,
     })),
   };
@@ -471,9 +469,7 @@ export function airView(conditions: RunConditions) {
     disponible: true,
     horas: conditions.hours.map((hour) => ({
       hora: hour.time,
-      aqiEEUU: hour.usAqi,
       nivel: hour.aqiLabel,
-      pm25: hour.pm25,
     })),
   };
 }
