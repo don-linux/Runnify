@@ -183,12 +183,12 @@ export function RunAdvice() {
             ¿Salgo a correr?
           </h1>
           <p className="mt-3 max-w-xl text-base leading-7 text-muted-foreground">
-            GLM 5.3 mira la hora que elegiste: temperatura, lluvia, viento, UV, radiación y aire.
+            Kimi K2.7 Code mira la hora que elegiste: temperatura, lluvia, viento, UV, radiación y aire.
             Te dice si sales, con qué cuidado, o si mejor lo dejas.
           </p>
         </div>
         <p className="max-w-xs text-sm leading-6 text-muted-foreground">
-          Modelo <span className="text-foreground">zai/glm-5.3</span> por Vercel AI Gateway. El
+          Modelo <span className="text-foreground">moonshotai/kimi-k2.7-code</span> por Vercel AI Gateway. El
           cielo lo pone Open-Meteo, sin otra clave.
         </p>
       </header>
@@ -319,7 +319,7 @@ export function RunAdvice() {
                 </p>
                 <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">
                   {configured === false
-                    ? "En cuanto guardes la clave del AI Gateway, el botón le pide a GLM 5.3 el veredicto de esta hora."
+                    ? "En cuanto guardes la clave del AI Gateway, el botón le pide a Kimi el veredicto de esta hora."
                     : "Pulsa ¿Salgo a correr? y el modelo consulta el pronóstico, el sol y el aire de esa ventana."}
                 </p>
               </div>
@@ -413,7 +413,9 @@ function Verdict({ text, kind }: { text: string; kind: ReturnType<typeof readVer
   return (
     <article>
       <p className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${tone}`}>{label}</p>
-      <div className="mt-4 space-y-3 text-base leading-7 whitespace-pre-wrap">{bodyAfterVerdict(text, kind)}</div>
+      <div className="mt-4 space-y-3 text-base leading-7 whitespace-pre-wrap">
+        {bodyAfterVerdict(text, kind).replaceAll("**", "")}
+      </div>
     </article>
   );
 }

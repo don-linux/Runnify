@@ -15,7 +15,7 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   title: "Salida — ¿salgo a correr?",
   description:
-    "GLM 5.3 consulta el pronóstico, el UV, la radiación y el aire para decirte si conviene salir a correr.",
+    "Kimi K2.7 Code consulta el pronóstico, el UV, la radiación y el aire para decirte si conviene salir a correr.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

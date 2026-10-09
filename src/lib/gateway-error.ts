@@ -46,10 +46,10 @@ export function publicModelError(error: unknown): string {
     return "El crédito del AI Gateway se agotó. Revisa el saldo antes de volver a preguntar.";
   }
   if (status === 403) {
-    return "El AI Gateway rechazó la consulta. Confirma que GLM 5.3 esté disponible en tu cupo.";
+    return "El AI Gateway rechazó la consulta. Confirma que Kimi K2.7 Code esté disponible en tu cupo.";
   }
   if (status === 429) {
-    return "GLM 5.3 está limitado por un momento. Espera y reintenta.";
+    return "Kimi K2.7 Code está limitado por un momento. Espera y reintenta.";
   }
 
   return "No pude completar el consejo. Reintenta en un momento.";

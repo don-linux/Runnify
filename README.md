@@ -1,8 +1,8 @@
 # Salida
 
-Una pantalla para runners. Eliges lugar, hora y duración, y **GLM 5.3** dice si conviene salir, salir con precaución o no salir. Antes de opinar consulta el pronóstico, el UV, la radiación solar y la calidad del aire.
+Una pantalla para runners. Eliges lugar, hora y duración, y **Kimi K2.7 Code** dice si conviene salir, salir con precaución o no salir. Antes de opinar consulta el pronóstico, el UV, la radiación solar y la calidad del aire.
 
-El clima sale de [Open-Meteo](https://open-meteo.com/), que no pide clave. El modelo se llama por [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) con `zai/glm-5.3`. La única clave es `AI_GATEWAY_API_KEY`.
+El clima sale de [Open-Meteo](https://open-meteo.com/), que no pide clave. El modelo se llama por [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) con `moonshotai/kimi-k2.7-code`. La única clave es `AI_GATEWAY_API_KEY`.
 
 ## Cómo correrlo
 

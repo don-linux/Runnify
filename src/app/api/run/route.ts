@@ -140,7 +140,7 @@ export async function POST(request: Request) {
   });
 
   const result = streamText({
-    model: "zai/glm-5.3",
+    model: "moonshotai/kimi-k2.7-code",
     instructions: INSTRUCTIONS,
     messages: await convertToModelMessages([latest]),
     reasoning: "low",
